@@ -1,0 +1,220 @@
+{
+  "name": "Telegram AI bot with LangChain nodes",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.query }}",
+        "options": {
+          "systemMessage": "Kamu adalah asisten AI yang membantu pengguna dengan jawaban yang jelas, akurat, dan mudah dipahami. Gunakan nada profesional namun tetap santai seperti sedang berbicara dengan teman yang paham teknologi. Hindari bahasa yang kaku, istilah yang berlebihan, atau gaya seperti press release. Tugasmu adalah menjawab langsung ke inti masalah tanpa bertele-tele. Ikuti instruksi pengguna dengan teliti, dan jika ada bagian yang kurang jelas, jelaskan alternatif yang paling mungkin atau minta klarifikasi seperlunya. Fokus pada solusi praktis, contoh konkret, dan penjelasan yang sederhana.\n\nhilangkan tanda '*' di setiap text "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        176,
+        208
+      ],
+      "id": "686d439a-4057-4baf-be38-aeda4dd1db98",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "n8n-endpoint",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        208
+      ],
+      "id": "6247cf74-71be-400b-85a1-4efd8f9752bb",
+      "name": "Webhook1",
+      "webhookId": "e96a0e4b-256a-463b-8b2f-ffd0558e7bfd"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $('AI Agent1').item.json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        704,
+        208
+      ],
+      "id": "baa13f3b-eaef-4cc4-ad57-f920d88955ef",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {
+          "dotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        512,
+        208
+      ],
+      "id": "533f127b-b528-4ebd-9c39-6dae7041a9f6",
+      "name": "Format JSON Reply"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        416
+      ],
+      "id": "b6ab5a93-1c29-49bf-a1f5-19b844a10c19",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Gc9wfct1cV9v4j3i",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "This tool retrieves relevant context from Pinecone based on the user's query by performing vector similarity search.\n\nWAJIB gunakan tool ini untuk semua pertanyaan tentang fakta, informasi, presiden, sejarah, teknologi, atau data spesifik apapun. Selalu cari di knowledge base terlebih dahulu sebelum menjawab.\n",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "project",
+          "mode": "list",
+          "cachedResultName": "project"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        496
+      ],
+      "id": "20cd40bf-3691-447c-8337-b8d9aefe2722",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "XPptwYic6MUFDFhl",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        672
+      ],
+      "id": "b69a00f4-43fa-42d5-b13e-e2e73d692be2",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "Gc9wfct1cV9v4j3i",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Format JSON Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format JSON Reply": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1b8f6898-b28f-4bdb-b603-53533080498c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d0b05e0e3be1a1b84fbd4f9eec0e4b6f08b1920485b8b4ce6a4800796acffaaa"
+  },
+  "id": "5EcO0tkFiBW8cQWF",
+  "tags": []
+}
